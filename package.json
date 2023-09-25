@@ -24,6 +24,7 @@
     "moment-timezone": "^0.5.43"
   },
   "devDependencies": {
+    "@types/amqplib": "^0.10.2",
     "@types/cors": "^2.8.13",
     "@types/express": "^4.17.17",
     "@types/node": "^20.6.4",

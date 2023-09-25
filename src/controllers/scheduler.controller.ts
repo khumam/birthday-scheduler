@@ -5,13 +5,14 @@ import moment from "moment";
 import momentTimezone from "moment-timezone";
 import { Prisma, PrismaClient, User } from "@prisma/client";
 import { sendEmail } from "../services/email.service";
-const prisma = new PrismaClient({
-  log: ['query'],
-});
+import { consumeMessage, produceMessage } from "../services/rabbitmq.service";
+const prisma = new PrismaClient();
 
 export default class SchedulerController {
   public static process = async (req: Request, res: Response) => {
     try {
+      const pendingUser = await consumeMessage();
+      console.log(pendingUser);
       const target = moment(moment().format('YYYY-MM-DD'), 'YYYY-MM-DD HH:mm:ss');
       const timezones = momentTimezone.tz.names();
       const matchingTimezones = [];
@@ -28,7 +29,7 @@ export default class SchedulerController {
       const userWhoBirthdayToday = await prisma.$queryRaw(Prisma.sql`SELECT * FROM User WHERE MONTH(birthday) IN (${Prisma.join(matchingMonth)}) AND DAY(birthday) IN (${Prisma.join(matchingDay)}) AND timezone IN (${Prisma.join(matchingTimezones)})`);
 
       (userWhoBirthdayToday as User[]).forEach(async (user: User) => {
-        const sent = await sendEmail(user);
+        await sendEmail(user);
       });
       
       const response = {
